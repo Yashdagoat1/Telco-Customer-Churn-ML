@@ -1,9 +1,10 @@
-# venvs
+# Virtual environments
 .venv/
 venv/
 env/
+testenv/
 
-# OS cruft
+# OS files
 .DS_Store
 
 # Python cache
@@ -11,12 +12,16 @@ __pycache__/
 *.py[cod]
 *.pyo
 
-# Big artifacts we don't want in git
+# Git
+.git/
+.gitignore
+
+# Large unnecessary folders
 mlruns/
-artifacts/
 data/raw/
 data/processed/
 
-# BUT keep our bundled serving model in the repo
-!src/serving/model/
-!src/serving/model/**
+# Ignore all artifacts EXCEPT required ones
+artifacts/*
+!artifacts/model.pkl
+!artifacts/feature_columns.json

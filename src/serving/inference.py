@@ -2,11 +2,9 @@
 INFERENCE PIPELINE - Production ML Model Serving (Deployment Ready)
 =================================================================
 
-This version removes MLflow dependency and uses local artifacts:
+Uses local artifacts:
 - artifacts/model.pkl
 - artifacts/feature_columns.json
-
-Works both locally and on cloud (Render, etc.)
 """
 
 import os
@@ -45,6 +43,7 @@ BINARY_MAP = {
 
 NUMERIC_COLS = ["tenure", "MonthlyCharges", "TotalCharges"]
 
+
 def _serve_transform(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df.columns = df.columns.str.strip()
@@ -82,28 +81,44 @@ def _serve_transform(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def predict(input_dict: dict) -> str:
+def predict(input_dict: dict) -> dict:
     """
-    Predict customer churn from input dictionary.
+    Predict customer churn with probability and risk level.
     """
 
-    # Convert to DataFrame
+    # Convert input to DataFrame
     df = pd.DataFrame([input_dict])
 
     # Transform features
     df_enc = _serve_transform(df)
 
-    # Predict
     try:
-        preds = model.predict(df_enc)
+        # === Prediction ===
+        pred = model.predict(df_enc)[0]
 
-        if hasattr(preds, "tolist"):
-            preds = preds.tolist()
-
-        result = preds[0] if isinstance(preds, list) else preds
+        # === Probability ===
+        if hasattr(model, "predict_proba"):
+            prob = float(model.predict_proba(df_enc)[0][1])  # churn probability
+        else:
+            prob = None
 
     except Exception as e:
         raise Exception(f"Model prediction failed: {e}")
 
-    # Output
-    return "Likely to churn" if result == 1 else "Not likely to churn"
+    # === Risk Level Logic ===
+    if prob is not None:
+        if prob > 0.7:
+            risk = "High"
+        elif prob > 0.4:
+            risk = "Medium"
+        else:
+            risk = "Low"
+    else:
+        risk = None
+
+    # === Final Output ===
+    return {
+        "prediction": "Likely to churn" if pred == 1 else "Not likely to churn",
+        "churn_probability": round(prob, 2) if prob is not None else None,
+        "risk_level": risk
+    }

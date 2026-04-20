@@ -137,7 +137,7 @@ def gradio_interface(
     
     # Call same inference pipeline as API endpoint
     result = predict(data)
-    return str(result)  # Return as string for Gradio display
+    return f"{result['prediction']} (Prob: {result['churn_probability']}, Risk: {result['risk_level']})"  # Return as string for Gradio display
 
 # === GRADIO UI CONFIGURATION ===
 # Build comprehensive Gradio interface with all customer features
