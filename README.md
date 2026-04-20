@@ -1,63 +1,126 @@
-## Telco Churn – End-to-End ML Project
-### Purpose
+# Telco Churn – End-to-End ML Project
 
-Build and ship a full machine-learning solution for predicting customer churn in a telecom setting—from data prep and modeling to an API + web UI deployed on AWS.
+## 📌 Purpose
+Build and deploy a complete machine learning solution to predict customer churn in a telecom setting—from data preprocessing and model training to a production-ready API and web interface.
 
-### Problem solved & benefits
+---
 
-- Faster decisions: Predicts which customers are likely to churn so teams can act before they leave.
-- Operationalized ML: Model is accessible via a REST API and a simple UI; anyone can test it without notebooks.
-- Repeatable delivery: CI/CD + containers mean every change can be rebuilt, tested, and redeployed in a consistent way.
-- Traceable experiments: MLflow tracks runs, metrics, and artifacts for reproducibility and auditing.
+## 🚀 Problem Solved & Benefits
 
-### What I built
+- **Faster decision-making:** Predicts customers likely to churn so retention strategies can be applied early  
+- **Operational ML:** Model is accessible via a REST API and UI (no notebooks required)  
+- **Reproducibility:** Fixed dependencies + version control ensure consistent builds  
+- **Automation:** CI/CD pipeline validates and deploys updates automatically  
 
-- Data & Modeling: Feature engineering + XGBoost classifier; experiments logged to MLflow.
-- Model tracking: Runs, metrics, and the serialized model logged under a named MLflow experiment.
-- Inference service: FastAPI app exposing /predict (POST) and a root health check /.
-- Web UI: Gradio interface mounted at /ui for quick, shareable manual testing.
-- Containerization: Docker image with uvicorn entrypoint (src.app.main:app) listening on port 8000.
-- CI/CD: GitHub Actions builds the image and pushes to Docker Hub; optionally triggers an ECS service update.
-- Orchestration: AWS ECS Fargate runs the container (serverless).
-- Networking: Application Load Balancer (ALB) on HTTP:80 forwarding to a Target Group (IP targets on HTTP:8000).
-- Security: Security groups scoped to allow ALB inbound 80 from the internet, and task inbound 8000 from the ALB SG.
-- Observability: CloudWatch Logs for container stdout/stderr and ECS service events.
+---
 
-### Deployment flow (high-level)
+## 🏗️ What I Built
 
-- Push to main → GitHub Actions builds the Docker image and pushes it to Docker Hub.
-- ECS service is updated (manually or via the workflow) to force a new deployment.
-- ALB health checks hit / on port 8000; once healthy, traffic is routed to the new task.
-- Users call POST /predict or open the Gradio UI at /ui via the ALB DNS.
+### 🔹 Data & Modeling
+- Feature engineering on Telco dataset  
+- Trained classification models (XGBoost / Random Forest)  
+- Selected best-performing model  
 
-### Roadblocks & how we solved them
+### 🔹 Model Artifacts
+- Saved trained model (`model.pkl`)  
+- Stored feature columns (`feature_columns.json`) for consistent inference  
 
-Unhealthy targets behind ALB
+### 🔹 Inference Service
+- Built using FastAPI  
+- Endpoints:
+  - `POST /predict` → returns churn prediction + probability  
+  - `GET /health` → service health check  
 
-- Cause: App didn’t respond at the health-check path; listener/target port mismatches.
-- Fixes: Added GET / health endpoint; confirmed ALB listener on 80 forwards to TG on 8000; TG health check path set to /.
+### 🔹 Web UI
+- Built using Gradio  
+- Available at `/ui` for easy testing  
 
-Module import error in container (ModuleNotFoundError: serving)
+### 🔹 Deployment
+- Deployed on Render (managed cloud platform)  
+- Handles environment, dependencies, and hosting  
 
-- Cause: Python path in the image didn’t include src/.
-- Fixes: Set PYTHONPATH=/app/src in the Dockerfile; corrected uvicorn app path to src.app.main:app.
+### 🔹 CI/CD Pipeline
+- Implemented using GitHub Actions  
+- Automatically:
+  - installs dependencies  
+  - checks model files  
+  - validates app startup  
+- Render auto-deploys on every push  
 
-ALB DNS timing out
+---
 
-- Cause: Security group rules not aligned with traffic flow.
-- Fixes: ALB SG allows inbound 80 from 0.0.0.0/0; task SG allows inbound 8000 from the ALB SG; outbound open.
+## 🔄 Deployment Flow
 
-ECS redeploy not picking up the new image
+1. Push code to GitHub  
+2. CI pipeline runs (build + validation)  
+3. Render automatically deploys updated code  
+4. API becomes live  
+5. Users:
+   - Send requests to `/predict`  
+   - Access UI via `/ui`  
 
-- Cause: Service still running previous task definition.
-- Fixes: Force new deployment (CLI or console) after pushing the new image; optional step added to CI.
+---
 
-Gradio UI error (“No runs found in experiment”)
+## ⚙️ ML Pipeline & Workflow
 
-- Cause: Inference/UI expected an MLflow-logged model but couldn’t resolve a run.
-- Fixes: Standardized MLflow experiment name and model logging in training; inference loads the logged model consistently (and a local path for dev).
+1. Data ingestion  
+2. Data cleaning & preprocessing  
+3. Feature engineering  
+4. Model training  
+5. Model evaluation  
+6. Model serialization (`model.pkl`)  
+7. Inference pipeline (same transformations applied)  
+8. API deployment  
 
-Local testing vs. prod paths
+---
 
-- Cause: MLflow artifact URIs differ locally vs. in container.
-- Fixes: For local dev, load via direct ./mlruns/.../artifacts/model; in prod, container loads the packaged model path used at build time.
+## ⚠️ Challenges & Solutions
+
+### 1. Python version mismatch
+- **Issue:** Some libraries failed on newer Python versions  
+- **Solution:** Fixed Python version for compatibility  
+
+### 2. Missing model artifacts
+- **Issue:** Model file not found during deployment  
+- **Solution:** Ensured artifacts are included and correctly loaded  
+
+### 3. API validation errors
+- **Issue:** Missing required input fields  
+- **Solution:** Matched API schema with training features  
+
+### 4. Feature mismatch
+- **Issue:** Training vs inference feature inconsistency  
+- **Solution:** Used saved feature columns and reindexed inputs  
+
+### 5. Environment differences
+- **Issue:** Local vs deployed behavior mismatch  
+- **Solution:** Used virtual environments + CI checks  
+
+---
+
+## 🛠️ Tech Stack
+
+- Python  
+- FastAPI  
+- Gradio  
+- Scikit-learn  
+- XGBoost  
+- GitHub Actions (CI/CD)  
+- Render (Deployment)  
+
+---
+
+## ▶️ How to Run Locally
+
+```bash
+# create virtual environment
+python -m venv .venv
+
+# activate (Windows)
+.venv\Scripts\activate
+
+# install dependencies
+pip install -r requirements.txt
+
+# run app
+uvicorn src.app.main:app --reload
