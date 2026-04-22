@@ -1,5 +1,11 @@
 # Telco Churn – End-to-End ML Project
 
+## 🚀 Live Demo
+
+🔗 **Try the app here:** https://telco-customer-churn-ml-qlia.onrender.com/ui/
+
+⚠️ Note: App may take ~30 seconds to load due to cold start (free hosting).
+
 ## 📌 Purpose
 Build and deploy a complete machine learning solution to predict customer churn in a telecom setting—from data preprocessing and model training to a production-ready API and web interface.
 
